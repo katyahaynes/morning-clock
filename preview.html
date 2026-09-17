@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Family Clock V6 Preview</title>
+<style>
+:root{
+  --paper:#fffaf4;--ink:#202126;--muted:#70717b;
+  --red:#f22f43;--blue:#2d91db;--yellow:#ffd84d;--purple:#8757e8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--paper);color:var(--ink)}
+body{overflow:hidden}
+.screen{width:100vw;height:100vh;min-height:500px;position:relative;background:var(--paper)}
+.top{position:absolute;right:4vw;top:3vh;text-align:right;z-index:8}
+.bigtime{font-size:clamp(34px,5vw,64px);font-weight:900;line-height:1}
+.date{font-size:clamp(15px,1.9vw,25px);font-weight:700;color:var(--muted);margin-top:8px}
+.timeline-wrap{position:absolute;left:6vw;right:6vw;top:27vh;height:57vh}
+.band{position:absolute;left:0;right:0;top:27%;height:38%;overflow:hidden;box-shadow:0 10px 25px rgba(0,0,0,.07)}
+.segment{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:clamp(27px,4.1vw,56px)}
+.play1{left:0;width:33.333%;background:var(--red)}
+.eat{left:33.333%;width:16.667%;background:var(--blue);flex-direction:column;gap:3px}
+.play2{left:50%;width:50%;background:var(--red)}
+.pancake{font-size:clamp(38px,5.5vw,70px);line-height:1}
+.pastwash{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.68);z-index:3;pointer-events:none}
+.axis{position:absolute;left:0;right:0;top:65%;height:15%}
+.tick{position:absolute;top:0;transform:translateX(-50%);background:#45464e;border-radius:3px}
+.tick.major{width:5px;height:27px}.tick.minor{width:3px;height:15px;opacity:.65}
+.tick-label{position:absolute;top:31px;transform:translateX(-50%);font-size:clamp(14px,1.7vw,22px);font-weight:800;color:#555761}
+.event{position:absolute;transform:translateX(-50%);text-align:center;font-weight:900;z-index:6;line-height:1.02}
+.event .icon{font-size:clamp(33px,4.5vw,59px);line-height:1}
+.event .name{font-size:clamp(14px,1.7vw,23px);margin-top:5px}
+.event.top-event{bottom:73%}
+.event.bottom-event{top:78%}
+.pointer-down{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid var(--ink);margin:9px auto 0}
+.pointer-up{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:18px solid var(--ink);margin:0 auto 8px}
+.med{left:50%;color:var(--purple)} .med .pointer-up{border-bottom-color:var(--purple)}
+.clothes{left:66.667%}.bus{left:88.889%}.school{left:100%}
+.bus .pointer-up{margin-bottom:3px}.bus .icon{margin-top:-2px}
+.now{position:absolute;top:27%;height:38%;width:0;z-index:7;pointer-events:none}
+.now-line{position:absolute;left:-3px;top:-2px;width:6px;height:calc(100% + 2px);background:var(--yellow);border-radius:3px;box-shadow:0 0 0 2px rgba(32,33,38,.10)}
+.now-badge{position:absolute;left:0;top:0;transform:translate(-50%,-100%);background:var(--yellow);border:3px solid var(--ink);border-radius:15px;padding:5px 8px;font-size:clamp(14px,1.55vw,21px);font-weight:900;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.controls{position:fixed;z-index:20;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:7px;background:rgba(255,255,255,.95);padding:9px;border:2px solid #d3d3d3;border-radius:23px;box-shadow:0 5px 20px rgba(0,0,0,.12);max-width:96vw;overflow-x:auto}
+.controls button{border:0;border-radius:14px;padding:10px 14px;font-weight:900;font-size:16px;white-space:nowrap;background:#eee;color:#111}.controls button.active{background:var(--yellow)}
+.day,.night{display:none;position:absolute;inset:0}
+.day{align-items:center;justify-content:center;flex-direction:column}
+.clock{width:min(54vh,68vw);aspect-ratio:1;border:14px solid var(--red);border-radius:50%;position:relative;background:white}
+.num{position:absolute;font-size:clamp(17px,2.5vw,28px);font-weight:900}
+.hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:10px;background:#202126}
+.hour{width:10px;height:26%;margin-left:-5px}.minute{width:8px;height:36%;margin-left:-4px}.second{width:4px;height:40%;margin-left:-2px;background:#e85aa5}
+.pin{position:absolute;width:24px;height:24px;background:var(--yellow);border:6px solid #202126;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.dayword{font-size:clamp(40px,7vw,80px);font-weight:900;margin-top:3vh}.daydate{font-size:clamp(23px,3vw,38px);font-weight:900;color:var(--purple);margin-top:1vh}.daydigital{font-size:clamp(32px,5vw,58px);font-weight:900;margin-top:3vh}
+.night{background:#07090d;color:#9da4b2;align-items:center;justify-content:center;flex-direction:column}.moon{font-size:70px}.nighttime{font-size:clamp(38px,7vw,80px);font-weight:800;margin-top:20px}
+@media (orientation:landscape){
+ .top{top:2.2vh;right:4vw}.timeline-wrap{top:20vh;height:68vh;left:5vw;right:5vw}
+ .band{top:31%;height:34%}.axis{top:65%}
+ .event.top-event{bottom:69%}.event.bottom-event{top:76%}
+ .now{top:31%;height:34%}
+}
+@media (max-width:700px) and (orientation:portrait){
+ .top{right:4vw;top:3vh}
+ .timeline-wrap{left:3vw;right:3vw;top:27vh;height:57vh}
+ .event .name{font-size:15px}
+ .school{left:98%}
+}
+</style>
+</head>
+<body>
+<div class="screen">
+<section id="morning">
+ <div class="top"><div class="bigtime" id="topTime"></div><div class="date" id="topDate"></div></div>
+ <div class="timeline-wrap">
+   <div class="event top-event clothes"><div class="icon">👕</div><div class="name">CLOTHES</div><div class="pointer-down"></div></div>
+   <div class="event top-event bus"><div class="icon">🚌</div><div class="name">BUS</div><div class="pointer-down"></div></div>
+   <div class="event top-event school"><div class="icon">🚗</div><div class="name">SCHOOL</div><div class="pointer-down"></div></div>
+
+   <div class="band">
+    <div class="segment play1">PLAY</div>
+    <div class="segment eat"><div class="pancake">🥞</div><div>EAT</div></div>
+    <div class="segment play2">PLAY</div>
+    <div class="pastwash" id="pastwash"></div>
+   </div>
+
+   <div class="now" id="now"><div class="now-badge">☀ NOW</div><div class="now-line"></div></div>
+
+   <div class="axis">
+    <div class="tick major" style="left:0%"></div><div class="tick-label" style="left:0%">6:00</div>
+    <div class="tick minor" style="left:16.667%"></div>
+    <div class="tick major" style="left:33.333%"></div><div class="tick-label" style="left:33.333%">7:00</div>
+    <div class="tick minor" style="left:50%"></div>
+    <div class="tick major" style="left:66.667%"></div><div class="tick-label" style="left:66.667%">8:00</div>
+    <div class="tick minor" style="left:83.333%"></div>
+    <div class="tick major" style="left:100%"></div><div class="tick-label" style="left:100%">9:00</div>
+   </div>
+
+   <div class="event bottom-event med"><div class="pointer-up"></div><div class="name">DEAN'S<br>MEDICINE</div></div>
+ </div>
+</section>
+
+<section class="day" id="day">
+ <div class="clock" id="clock">
+  <div class="hand hour" id="hh"></div><div class="hand minute" id="mh"></div><div class="hand second" id="sh"></div><div class="pin"></div>
+ </div>
+ <div class="dayword" id="dayWord"></div><div class="daydate" id="dayDate"></div><div class="daydigital" id="dayDigital"></div>
+</section>
+<section class="night" id="night"><div class="moon">☾</div><div class="nighttime" id="nightTime"></div></section>
+</div>
+
+<div class="controls">
+<button data-t="6:30">6:30</button><button data-t="7:15">7:15</button><button data-t="7:45">7:45</button><button data-t="8:05">8:05</button><button data-t="8:45">8:45</button><button data-mode="day">Day</button><button data-mode="night">Night</button><button data-mode="auto">Auto</button>
+</div>
+
+<script>
+let preview="6:30", forced="morning";
+const $=id=>document.getElementById(id);
+function fakeDate(t){const d=new Date();const [h,m]=t.split(":").map(Number);d.setHours(h,m,0,0);return d}
+function fmt(d){return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
+function dateText(d){return d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"})}
+function setMode(mode){$("morning").style.display=mode==="morning"?"block":"none";$("day").style.display=mode==="day"?"flex":"none";$("night").style.display=mode==="night"?"flex":"none"}
+function makeClockNumbers(){
+ const c=$("clock"); c.querySelectorAll(".num").forEach(n=>n.remove());
+ for(let n=1;n<=12;n++){
+   const el=document.createElement("div");el.className="num";el.textContent=n;
+   const a=n*Math.PI/6, r=40;
+   el.style.left=(50+Math.sin(a)*r)+"%";el.style.top=(50-Math.cos(a)*r)+"%";el.style.transform="translate(-50%,-50%)";
+   c.appendChild(el);
+ }
+}
+function update(){
+ const real=new Date();let d=preview?fakeDate(preview):real;let mode=forced;
+ if(forced==="auto"){const mins=real.getHours()*60+real.getMinutes(),wd=real.getDay();mode=(wd>=1&&wd<=5&&mins>=360&&mins<540)?"morning":(mins>=1260||mins<360)?"night":"day";d=real}
+ setMode(mode);
+ $("topTime").textContent=fmt(d);$("topDate").textContent=dateText(d);
+ const mins=d.getHours()*60+d.getMinutes()+d.getSeconds()/60,p=Math.max(0,Math.min(1,(mins-360)/180));
+ $("now").style.left=(p*100)+"%";$("pastwash").style.width=(p*100)+"%";
+ $("dayWord").textContent=d.toLocaleDateString([], {weekday:"long"}).toUpperCase();
+ $("dayDate").textContent=d.toLocaleDateString([], {month:"long",day:"numeric"});$("dayDigital").textContent=fmt(d);$("nightTime").textContent=fmt(d);
+ const s=d.getSeconds(),m=d.getMinutes()+s/60,h=(d.getHours()%12)+m/60;
+ $("sh").style.transform=`rotate(${s*6}deg)`;$("mh").style.transform=`rotate(${m*6}deg)`;$("hh").style.transform=`rotate(${h*30}deg)`;
+}
+function mark(b){document.querySelectorAll(".controls button").forEach(x=>x.classList.remove("active"));b.classList.add("active")}
+document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{preview=b.dataset.t;forced="morning";mark(b)});
+document.querySelector('[data-mode="day"]').onclick=e=>{preview=null;forced="day";mark(e.target)};
+document.querySelector('[data-mode="night"]').onclick=e=>{preview=null;forced="night";mark(e.target)};
+document.querySelector('[data-mode="auto"]').onclick=e=>{preview=null;forced="auto";mark(e.target)};
+makeClockNumbers();mark(document.querySelector('[data-t="6:30"]'));update();setInterval(update,1000);
+</script>
+</body>
+</html>
